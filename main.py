@@ -10,9 +10,19 @@ NUM_CHANNELS = 16
 
 # SBUS channel values are commonly around 172–1811,
 # although the actual range depends on the receiver.
-SBUS_MIN = 172
-SBUS_MAX = 1811
-SBUS_MID = (SBUS_MIN + SBUS_MAX) // 2
+SBUS_RANGE = [
+    (600, 1400),
+    (600, 1400),
+    (200, 1800),
+    (600, 1400)
+]
+SBUS_MIN = []
+SBUS_MAX = []
+SBUS_MID = []
+for min_value, max_value in SBUS_RANGE:
+    SBUS_MIN.append(min_value)
+    SBUS_MAX.append(max_value)
+    SBUS_MID.append((min_value + max_value) // 2)
 
 # Four analog axes.
 AXES = [
@@ -60,15 +70,15 @@ capabilities = {
 }
 
 
-def sbus_to_axis(value: int) -> int:
+def sbus_to_axis(value: int, min_value:int, mid_value: int, max_value: int) -> int:
     """Map an SBUS channel value to a signed joystick axis."""
 
-    value = max(SBUS_MIN, min(SBUS_MAX, value))
+    value = max(min_value, min(max_value, value))
 
     # Normalize to [-1, 1], with the midpoint at zero.
     normalized = (
-        (value - SBUS_MID)
-        / ((SBUS_MAX - SBUS_MIN) / 2)
+        (value - mid_value)
+        / ((max_value - min_value) / 2)
     )
 
     return round(
@@ -119,7 +129,7 @@ def main():
                     joystick.write(
                         e.EV_ABS,
                         axis,
-                        sbus_to_axis(channels[index]),
+                        sbus_to_axis(channels[index], SBUS_MIN[index], SBUS_MID[index], SBUS_MAX[index]),
                     )
 
                 # Channels 5–16 -> buttons.
@@ -129,7 +139,7 @@ def main():
                     channel_value = channels[index + 4]
 
                     pressed = int(
-                        channel_value > SBUS_MID
+                        channel_value > SBUS_MID[2]
                     )
 
                     joystick.write(
