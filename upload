@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+./compile $1 && arduino-cli upload $1 -p $2 --fqbn esp32:esp32:esp32 -v
